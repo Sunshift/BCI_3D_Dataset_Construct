@@ -1,0 +1,25 @@
+import numpy as np
+
+channel_names = np.load('__filePath__/channelNames.npy', allow_pickle=True)
+sEEG_data = np.load('__filePath__/sEEG.npy')
+words = np.load('__filePath__/words.npy')
+
+sampling_rate = 2048  # You should replace this with the actual sampling rate
+duration_in_seconds = 2
+samples_per_snippet = duration_in_seconds * sampling_rate
+
+word_changes = np.diff(words != "", prepend=False, append=False)
+word_starts = np.where(word_changes == True)[0]
+
+if word_starts[-1] + samples_per_snippet > len(sEEG_data):
+    word_starts = word_starts[word_starts + samples_per_snippet <= len(sEEG_data)]
+
+wordData = np.zeros((samples_per_snippet, sEEG_data.shape[1], len(word_starts)))
+
+for index, start in enumerate(word_starts):
+    if words[start] != '':
+        wordData[:, :, index] = sEEG_data[start:start + samples_per_snippet, :]
+
+np.save('__filePath__/3d_wordsnippet_dataset.npy', wordData)
+
+print(f"Shape of the 3D dataset: {wordData.shape}")
